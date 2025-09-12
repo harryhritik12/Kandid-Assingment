@@ -1,11 +1,6 @@
-// lib/queries/leads.ts
+// lib/queries/leads.ts (client-safe)
 import { Lead } from "@/types/lead";
-import { db } from "@/lib/db";
-import { leads } from "@/drizzle/schema";
-import { eq } from "drizzle-orm";
-/**
- * Fetch paginated leads (all campaigns, optional search)
- */
+
 export async function fetchLeads(
   page = 1,
   search = ""
@@ -26,17 +21,10 @@ export async function fetchLeads(
   return res.json();
 }
 
-/**
- * Fetch all leads for a specific campaign
- */
 export async function fetchLeadsByCampaignId(campaignId: string): Promise<Lead[]> {
-  const rows = await db
-    .select()
-    .from(leads)
-    .where(eq(leads.campaignId, campaignId));
-
-  return rows.map((row) => ({
-    ...row,
-    status: row.status as Lead["status"], // 👈 force-cast
-  }));
+  const res = await fetch(`/api/campaigns/${campaignId}/leads`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch campaign leads");
+  }
+  return res.json();
 }
